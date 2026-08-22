@@ -1,0 +1,40 @@
+ext {
+    javaVersion = 25
+    lwjglVersion = '3.4.2'
+    jomlVersion = '1.10.9'
+    junitVersion = '5.14.2'
+}
+
+allprojects {
+    group = 'org.twingolfpapa.engine'
+    version = '0.1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(rootProject.javaVersion)
+        }
+    }
+
+    dependencies {
+        testImplementation platform("org.junit:junit-bom:${rootProject.junitVersion}")
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs.addAll(['-Xlint:all'])
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}

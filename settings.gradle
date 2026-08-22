@@ -1,0 +1,5 @@
+rootProject.name = 'project-engine'
+
+include 'engine-core'
+include 'engine-lwjgl'
+include 'sandbox'

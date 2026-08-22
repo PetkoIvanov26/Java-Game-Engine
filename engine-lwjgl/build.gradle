@@ -1,0 +1,31 @@
+plugins {
+    id 'java-library'
+}
+
+def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+def osArch = System.getProperty('os.arch').toLowerCase(Locale.ROOT)
+def isArm64 = osArch.contains('aarch64') || osArch.contains('arm64')
+
+def lwjglNatives
+if (osName.contains('win')) {
+    lwjglNatives = isArm64 ? 'natives-windows-arm64' : 'natives-windows'
+} else if (osName.contains('mac')) {
+    lwjglNatives = isArm64 ? 'natives-macos-arm64' : 'natives-macos'
+} else if (osName.contains('linux')) {
+    lwjglNatives = isArm64 ? 'natives-linux-arm64' : 'natives-linux'
+} else {
+    throw new GradleException("Unsupported desktop operating system: ${osName}")
+}
+
+dependencies {
+    api project(':engine-core')
+
+    implementation platform("org.lwjgl:lwjgl-bom:${rootProject.lwjglVersion}")
+    implementation 'org.lwjgl:lwjgl'
+    implementation 'org.lwjgl:lwjgl-glfw'
+    implementation 'org.lwjgl:lwjgl-opengl'
+
+    runtimeOnly "org.lwjgl:lwjgl::${lwjglNatives}"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::${lwjglNatives}"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::${lwjglNatives}"
+}

@@ -1,0 +1,20 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':engine-lwjgl')
+}
+
+application {
+    mainClass = 'org.twingolfpapa.sandbox.SandboxApplication'
+
+    applicationDefaultJvmArgs = [
+            '--enable-native-access=ALL-UNNAMED',
+            '-Dorg.lwjgl.system.memoryBackend=ffm'
+    ]
+
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('mac')) {
+        applicationDefaultJvmArgs += '-XstartOnFirstThread'
+    }
+}
