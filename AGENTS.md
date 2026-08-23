@@ -6,5 +6,4 @@ Use the local books in `C:\Storage\Learning\Game programing related books` as so
 
 Testing lesson rule: for each implementation step, provide at most one concrete test hint. Describe any additional test cases only as observable behaviors for the user to design and implement.
 
-Current learning path: finish milestone 1, platform and input. The core owns a buffered, fixed-update input snapshot. The next boundary is translating GLFW key/action constants in `engine-lwjgl` into engine-owned `Key` and `ButtonTransition` values without leaking GLFW into `engine-core`.
-
+Current learning path: milestone 2, graphics pipeline fundamentals. Foundation and Input v1 are complete. The core owns buffered, fixed-update input snapshots; `engine-lwjgl` translates GLFW keyboard, mouse-button, cursor, scroll, and focus notifications without leaking LWJGL types into the core. The next learning slice is OpenGL debug output and capability reporting, followed by shader compilation/linking and explicitly owned vertex/index/vertex-array resources.

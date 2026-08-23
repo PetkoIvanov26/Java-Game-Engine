@@ -3,8 +3,7 @@ package org.twingolfpapa.sandbox;
 import org.twingolfpapa.engine.api.EngineClient;
 import org.twingolfpapa.engine.api.EngineContext;
 import org.twingolfpapa.engine.core.EngineConfiguration;
-import org.twingolfpapa.engine.input.BufferedInput;
-import org.twingolfpapa.engine.input.Key;
+import org.twingolfpapa.engine.input.*;
 import org.twingolfpapa.engine.lwjgl.DesktopApplication;
 import org.twingolfpapa.engine.lwjgl.WindowConfiguration;
 import org.twingolfpapa.engine.lwjgl.opengl.OpenGlFrame;
@@ -30,11 +29,11 @@ public final class SandboxApplication implements EngineClient {
 
     @Override
     public void fixedUpdate(double fixedDeltaSeconds) {
-         if (context.input().wasKeyPressed(Key.ESCAPE)) {
+         if (context.input().wasButtonPressed(Key.ESCAPE)) {
              context.control().requestStop();
          }
 
-         wHeld = context.input().isKeyDown(Key.W);
+         wHeld = context.input().isButtonDown(MouseButton.LEFT);
     }
 
     @Override

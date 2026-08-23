@@ -7,6 +7,7 @@ import org.twingolfpapa.engine.api.EngineControl;
 import org.twingolfpapa.engine.api.EngineHost;
 import org.twingolfpapa.engine.input.BufferedInput;
 import org.twingolfpapa.engine.input.ButtonTransition;
+import org.twingolfpapa.engine.input.CursorState;
 import org.twingolfpapa.engine.input.Key;
 import org.twingolfpapa.engine.time.MonotonicClock;
 
@@ -68,11 +69,11 @@ class EngineLoopTest {
         List<Boolean> heldDuringUpdates = new ArrayList<>();
 
         EngineClient client = fixedDeltaSeconds -> {
-            pressedDuringUpdates.add(input.wasKeyPressed(Key.W));
-            heldDuringUpdates.add(input.isKeyDown(Key.W));
+            pressedDuringUpdates.add(input.wasButtonPressed(Key.W));
+            heldDuringUpdates.add(input.isButtonDown(Key.W));
         };
 
-        input.onKeyChanged(Key.W, ButtonTransition.PRESSED);
+        input.onButtonChanged(Key.W, ButtonTransition.PRESSED);
 
         new EngineLoop(new EngineConfiguration(10, 100, 5),
                 new SequenceClock(0, 35), new OneFrameHost(), client, input)
@@ -92,11 +93,11 @@ class EngineLoopTest {
         List<Boolean> heldDuringUpdates = new ArrayList<>();
 
         EngineClient client = fixedDeltaSeconds -> {
-            pressedDuringUpdates.add(input.wasKeyPressed(Key.W));
-            heldDuringUpdates.add(input.isKeyDown(Key.W));
+            pressedDuringUpdates.add(input.wasButtonPressed(Key.W));
+            heldDuringUpdates.add(input.isButtonDown(Key.W));
         };
 
-        input.onKeyChanged(Key.W, ButtonTransition.PRESSED);
+        input.onButtonChanged(Key.W, ButtonTransition.PRESSED);
 
         new EngineLoop(new EngineConfiguration(10, 100, 5),
                 new SequenceClock(0, 5, 10), host, client, input)
@@ -106,7 +107,33 @@ class EngineLoopTest {
 
         assertEquals(List.of(true), heldDuringUpdates);
         assertEquals(2, host.presentCalls);
+    }
 
+    @Test
+    void publishesCursorMovementOnceAcrossCatchUpUpdates() {
+        BufferedInput input = new BufferedInput();
+        List<CursorState> cursorDuringUpdates = new ArrayList<>();
+
+        EngineClient client = fixedDeltaSeconds ->
+                cursorDuringUpdates.add(input.cursor());
+
+        // Establish the cursor baseline.
+        input.onCursorMoved(10.0, 10.0);
+
+        // Produce pending movement of (+5, +8).
+        input.onCursorMoved(15.0, 18.0);
+
+        new EngineLoop(
+                new EngineConfiguration(10, 100, 5),
+                new SequenceClock(0, 35),
+                new OneFrameHost(),
+                client,
+                input
+        ).run();
+
+        assertEquals(List.of(new CursorState(15.0, 18.0, 5.0, 8.0),
+                        new CursorState(15.0, 18.0, 0.0, 0.0), new CursorState(15.0, 18.0, 0.0, 0.0)),
+                cursorDuringUpdates);
     }
 
     private static class RecordingClient implements EngineClient {
