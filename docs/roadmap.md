@@ -18,7 +18,7 @@ Every milestone must:
 
 ## Milestones
 
-### 0. Foundation - current
+### 0. Foundation - completed
 
 - Multi-module build with one-way dependencies.
 - Fixed-step scheduler and engine loop.
@@ -27,16 +27,19 @@ Every milestone must:
 
 Definition of done: `gradlew build` succeeds and the sandbox opens a clear-color window that closes cleanly.
 
-### 1. Platform and input
+### 1. Platform and input - completed
 
-- Keyboard, mouse buttons, cursor, scroll, and window events.
-- Separate held state from one-shot frame events.
+- Engine-owned keyboard and mouse-button concepts translated from GLFW.
+- Separate held state from ordered press/release edges.
+- Buffered cursor position, per-tick cursor movement, and two-dimensional scroll offsets.
 - Queue one-shot input so catch-up simulation ticks do not repeat it.
-- Frame statistics and controlled shutdown.
+- Focus-safe cursor baselines and controlled shutdown.
 
-Definition of done: the sandbox visualizes input state and every edge event is consumed exactly once.
+Definition of done: the sandbox demonstrates desktop input, deterministic tests cover snapshot timing, every edge/delta is consumed exactly once, and the full build passes.
 
-### 2. Graphics pipeline fundamentals
+Deferred input extensions: text/Unicode entry, gamepads and analog axes, action remapping, recording/replay, raw mouse motion, cursor capture, and multiple windows.
+
+### 2. Graphics pipeline fundamentals - current
 
 - OpenGL debug callback and capability reporting.
 - Shader compilation/linking with readable diagnostics.

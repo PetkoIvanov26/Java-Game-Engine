@@ -4,9 +4,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.twingolfpapa.engine.api.EngineHost;
-import org.twingolfpapa.engine.input.ButtonTransition;
-import org.twingolfpapa.engine.input.InputSink;
-import org.twingolfpapa.engine.input.Key;
+import org.twingolfpapa.engine.input.*;
 
 import java.nio.IntBuffer;
 import java.util.Objects;
@@ -66,12 +64,38 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
             glfwWindow = new GlfwWindow(window);
 
             glfwSetKeyCallback(window, (ignoredWindow, glfwKey, scanCode, glfwAction, modifiers) -> {
-                        Optional<Key> key = GlfwInputMapper.mapKey(glfwKey);
+                        Optional<DigitalButton> key = GlfwInputMapper.mapButton(glfwKey);
                         Optional<ButtonTransition> transition =
                                 GlfwInputMapper.mapAction(glfwAction);
 
                         if (key.isPresent() && transition.isPresent()) {
-                            inputSink.onKeyChanged(key.get(), transition.get());
+                            inputSink.onButtonChanged(key.get(), transition.get());
+                        }
+                    }
+            );
+
+            glfwSetMouseButtonCallback(window, (ignoredWindow, glfwButton, glfwAction, modifiers) -> {
+                        Optional<DigitalButton> button = GlfwInputMapper.mapButton(glfwButton);
+
+                        Optional<ButtonTransition> transition = GlfwInputMapper.mapAction(glfwAction);
+
+                        if (button.isPresent() && transition.isPresent()) {
+                            inputSink.onButtonChanged(button.get(), transition.get());
+                        }
+                    }
+            );
+
+            glfwSetCursorPosCallback(window, (ignoredWindow, x, y) ->
+                    inputSink.onCursorMoved(x, y)
+            );
+
+            glfwSetScrollCallback(window, (ignoredWindow, xOffset, yOffset) ->
+                    inputSink.onScrolled(xOffset, yOffset)
+            );
+
+            glfwSetWindowFocusCallback(window, (ignoredWindow, focused) -> {
+                        if (!focused) {
+                            inputSink.onCursorTrackingInterrupted();
                         }
                     }
             );

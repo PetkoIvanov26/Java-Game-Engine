@@ -31,6 +31,7 @@ DesktopApplication
     client.initialize
     while running
       host.pollEvents
+      publish pending input at each fixed-update boundary
       measure real elapsed time
       schedule 0..N fixed updates
       client.fixedUpdate(fixedDelta)
@@ -55,15 +56,16 @@ This is pure Java and has no native or graphics dependency. It contains:
 - the public `EngineClient`, `EngineControl`, and `EngineHost` contracts;
 - validated engine timing configuration;
 - fixed-step scheduling;
+- buffered digital-button, cursor, and scroll snapshots;
 - the main engine loop.
 
 The core must always be testable with fake clocks and fake hosts.
 
 ### `engine-lwjgl`
 
-This is the first platform adapter. It owns GLFW initialization, the window, the OpenGL context, native callbacks, buffer presentation, and cleanup.
+This is the first platform adapter. It owns GLFW initialization, the window, the OpenGL context, native callbacks, buffer presentation, and cleanup. It translates GLFW keyboard, mouse-button, cursor, scroll, and focus notifications into engine-owned input concepts.
 
-It will later own concrete input and rendering implementations. LWJGL types should not leak into `engine-core`.
+It will later own rendering implementations. LWJGL types must not leak into `engine-core`.
 
 ### `sandbox`
 

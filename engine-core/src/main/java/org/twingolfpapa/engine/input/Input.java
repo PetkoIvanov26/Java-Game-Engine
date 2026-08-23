@@ -3,11 +3,15 @@ package org.twingolfpapa.engine.input;
 import java.util.List;
 
 public interface Input {
-    boolean isKeyDown(Key key);
+    boolean isButtonDown(DigitalButton button);
 
-    boolean wasKeyPressed(Key key);
+    boolean wasButtonPressed(DigitalButton button);
 
-    boolean wasKeyReleased(Key key);
+    boolean wasButtonReleased(DigitalButton button);
 
-    List<KeyEvent> keyEvents();
+    List<ButtonEvent> buttonEvents();
+
+    CursorState cursor();
+
+    ScrollDelta scrollDelta();
 }
