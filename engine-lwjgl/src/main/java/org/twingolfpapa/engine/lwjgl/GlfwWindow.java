@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.twingolfpapa.engine.api.EngineHost;
 import org.twingolfpapa.engine.input.*;
+import org.twingolfpapa.engine.lwjgl.opengl.OpenGlDiagnostics;
 
 import java.nio.IntBuffer;
 import java.util.Objects;
@@ -19,9 +20,12 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public final class GlfwWindow implements EngineHost, AutoCloseable {
     private final long handle;
     private boolean closed;
+    private final OpenGlDiagnostics diagnostics;
 
-    private GlfwWindow(long handle) {
+
+    private GlfwWindow(long handle, OpenGlDiagnostics diagnostics) {
         this.handle = handle;
+        this.diagnostics = diagnostics;
     }
 
     public static GlfwWindow create(WindowConfiguration configuration, InputSink inputSink) {
@@ -29,6 +33,7 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
         Objects.requireNonNull(inputSink, "inputSink");
         GLFWErrorCallback.createPrint(System.err).set();
         GlfwWindow glfwWindow = null;
+        OpenGlDiagnostics diagnostics = null;
 
         if (!glfwInit()) {
             clearErrorCallback();
@@ -44,6 +49,7 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
             glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
             glfwWindowHint(GLFW_RESIZABLE, configuration.resizable() ? GLFW_TRUE : GLFW_FALSE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
             window = glfwCreateWindow(configuration.width(), configuration.height(), configuration.title(),
                     NULL, NULL);
@@ -55,13 +61,15 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
             glfwSwapInterval(configuration.verticalSync() ? 1 : 0);
             GL.createCapabilities();
 
+            diagnostics = OpenGlDiagnostics.install(System.err);
+
             updateViewport(window);
             glfwSetFramebufferSizeCallback(window, (ignored, width, height) ->
                     glViewport(0, 0, Math.max(width, 0), Math.max(height, 0))
             );
             glfwShowWindow(window);
 
-            glfwWindow = new GlfwWindow(window);
+            glfwWindow = new GlfwWindow(window, diagnostics);
 
             glfwSetKeyCallback(window, (ignoredWindow, glfwKey, scanCode, glfwAction, modifiers) -> {
                         Optional<DigitalButton> key = GlfwInputMapper.mapButton(glfwKey);
@@ -100,10 +108,15 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
                     }
             );
         } catch (RuntimeException exception) {
+            if (diagnostics != null) {
+                diagnostics.close();
+            }
+
             if (window != NULL) {
                 glfwFreeCallbacks(window);
                 glfwDestroyWindow(window);
             }
+
             glfwTerminate();
             clearErrorCallback();
             throw exception;
