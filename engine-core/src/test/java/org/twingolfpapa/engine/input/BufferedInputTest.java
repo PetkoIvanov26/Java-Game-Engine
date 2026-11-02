@@ -27,14 +27,14 @@ public class BufferedInputTest {
 
         input.onButtonChanged(Key.W, ButtonTransition.PRESSED);
 
-        // GLFW has reported the press, but simulation has not advanced.
+        // GLFW reported the press. The simulation still waits for its next fixed update.
         assertFalse(input.isButtonDown(Key.W));
         assertFalse(input.wasButtonPressed(Key.W));
         assertTrue(input.buttonEvents().isEmpty());
 
         input.beginFixedUpdate();
 
-        // The press is now visible to this simulation tick.
+        // This fixed update now sees the press.
         assertTrue(input.isButtonDown(Key.W));
         assertTrue(input.wasButtonPressed(Key.W));
         assertFalse(input.wasButtonReleased(Key.W));
@@ -118,14 +118,14 @@ public class BufferedInputTest {
 
         input.onButtonChanged(MouseButton.LEFT, ButtonTransition.PRESSED);
 
-        // GLFW has reported the press, but simulation has not advanced.
+        // GLFW reported the press. The simulation still waits for its next fixed update.
         assertFalse(input.isButtonDown(MouseButton.LEFT));
         assertFalse(input.wasButtonPressed(MouseButton.LEFT));
         assertTrue(input.buttonEvents().isEmpty());
 
         input.beginFixedUpdate();
 
-        // The press is now visible to this simulation tick.
+        // This fixed update now sees the press.
         assertTrue(input.isButtonDown(MouseButton.LEFT));
         assertTrue(input.wasButtonPressed(MouseButton.LEFT));
         assertFalse(input.wasButtonReleased(MouseButton.LEFT));

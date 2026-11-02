@@ -5,6 +5,7 @@ import org.twingolfpapa.engine.api.EngineClient;
 import org.twingolfpapa.engine.api.EngineContext;
 import org.twingolfpapa.engine.api.EngineControl;
 import org.twingolfpapa.engine.api.EngineHost;
+import org.twingolfpapa.engine.graphics.FramebufferSize;
 import org.twingolfpapa.engine.input.BufferedInput;
 import org.twingolfpapa.engine.input.ButtonTransition;
 import org.twingolfpapa.engine.input.CursorState;
@@ -185,6 +186,11 @@ class EngineLoopTest {
         public void present() {
             presentCalls++;
         }
+
+        @Override
+        public FramebufferSize getFramebufferSize() {
+            return new FramebufferSize(0, 0);
+        }
     }
 
     private static final class MultiFrameHost implements EngineHost {
@@ -207,6 +213,11 @@ class EngineLoopTest {
         @Override
         public void present() {
             presentCalls++;
+        }
+
+        @Override
+        public FramebufferSize getFramebufferSize() {
+            return new FramebufferSize(0, 0);
         }
     }
 

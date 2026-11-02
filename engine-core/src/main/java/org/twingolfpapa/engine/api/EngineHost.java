@@ -1,11 +1,13 @@
 package org.twingolfpapa.engine.api;
 
+import org.twingolfpapa.engine.graphics.RenderSurface;
+
 /**
- * The operating-system-facing services needed by the core loop.
+ * Provides operating-system services to the core loop.
  *
  * <p>Desktop, headless test, and future server hosts can implement this boundary.</p>
  */
-public interface EngineHost {
+public interface EngineHost extends RenderSurface {
 
     void pollEvents();
 

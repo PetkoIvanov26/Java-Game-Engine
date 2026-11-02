@@ -1,6 +1,6 @@
 package org.twingolfpapa.engine.time;
 
-/** A monotonic clock suitable for measuring elapsed time. */
+/** Provides monotonic time for elapsed-time measurements. */
 @FunctionalInterface
 public interface MonotonicClock {
 

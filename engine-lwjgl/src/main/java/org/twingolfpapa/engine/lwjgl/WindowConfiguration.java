@@ -2,7 +2,7 @@ package org.twingolfpapa.engine.lwjgl;
 
 import java.util.Objects;
 
-/** Immutable configuration for the initial desktop window. */
+/** Defines immutable configuration for the initial desktop window. */
 public record WindowConfiguration(int width, int height, String title, boolean resizable, boolean verticalSync) {
     public WindowConfiguration {
         if (width <= 0 || height <= 0) {
