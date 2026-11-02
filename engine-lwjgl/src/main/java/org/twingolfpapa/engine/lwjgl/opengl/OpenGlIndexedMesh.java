@@ -50,12 +50,12 @@ public final class OpenGlIndexedMesh implements AutoCloseable {
 
             glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
-            //layout 0
+            // Vertex attribute layout 0 stores positions.
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, POSITION_COMPONENTS, GL_FLOAT, false,
                     STRIDE_BYTES, POSITION_OFFSET_BYTES);
 
-            //layout 1
+            // Vertex attribute layout 1 stores colors.
             glEnableVertexAttribArray(1);
             glVertexAttribPointer(1, COLOR_COMPONENTS, GL_FLOAT, false,
                     STRIDE_BYTES, COLOR_OFFSET_BYTES);
@@ -89,7 +89,7 @@ public final class OpenGlIndexedMesh implements AutoCloseable {
 
     public void draw() {
         if (closed) {
-            throw new IllegalStateException("Cannot draw a closed mesh");
+            throw new IllegalStateException("A draw operation requires an open mesh");
         }
 
         glBindVertexArray(vertexArrayId);

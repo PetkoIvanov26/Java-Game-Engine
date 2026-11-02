@@ -3,7 +3,7 @@ package org.twingolfpapa.engine.core;
 import java.time.Duration;
 import java.util.Objects;
 
-/** Immutable timing policy for an engine loop. */
+/** Defines an immutable timing policy for an engine loop. */
 public record EngineConfiguration(long fixedStepNanos, long maxFrameNanos, int maxUpdatesPerFrame) {
     private static final long NANOS_PER_SECOND = 1_000_000_000L;
 

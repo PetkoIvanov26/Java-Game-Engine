@@ -1,7 +1,7 @@
 package org.twingolfpapa.engine.api;
 
 /**
- * A game or tool hosted by the engine.
+ * Represents a game or tool that the engine hosts.
  *
  * <p>The engine owns the loop. A client owns its simulation state and rendering commands.</p>
  */

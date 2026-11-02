@@ -4,6 +4,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.twingolfpapa.engine.api.EngineHost;
+import org.twingolfpapa.engine.graphics.FramebufferSize;
 import org.twingolfpapa.engine.input.*;
 import org.twingolfpapa.engine.lwjgl.opengl.OpenGlDiagnostics;
 
@@ -16,16 +17,18 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-/** A single-window GLFW host for the desktop engine loop. */
+/** Hosts one GLFW window for the desktop engine loop. */
 public final class GlfwWindow implements EngineHost, AutoCloseable {
     private final long handle;
     private boolean closed;
+    private FramebufferSize framebufferSize;
     private final OpenGlDiagnostics diagnostics;
 
 
-    private GlfwWindow(long handle, OpenGlDiagnostics diagnostics) {
+    private GlfwWindow(long handle, OpenGlDiagnostics diagnostics, FramebufferSize framebufferSize) {
         this.handle = handle;
         this.diagnostics = diagnostics;
+        this.framebufferSize = Objects.requireNonNull(framebufferSize, "framebufferSize");
     }
 
     public static GlfwWindow create(WindowConfiguration configuration, InputSink inputSink) {
@@ -37,7 +40,7 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
 
         if (!glfwInit()) {
             clearErrorCallback();
-            throw new IllegalStateException("Unable to initialize GLFW");
+            throw new IllegalStateException("GLFW did not initialize");
         }
 
         long window = NULL;
@@ -54,7 +57,7 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
             window = glfwCreateWindow(configuration.width(), configuration.height(), configuration.title(),
                     NULL, NULL);
             if (window == NULL) {
-                throw new IllegalStateException("Unable to create the GLFW window");
+                throw new IllegalStateException("GLFW did not create the window");
             }
 
             glfwMakeContextCurrent(window);
@@ -63,18 +66,19 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
 
             diagnostics = OpenGlDiagnostics.install(System.err);
 
-            updateViewport(window);
-            glfwSetFramebufferSizeCallback(window, (ignored, width, height) ->
-                    glViewport(0, 0, Math.max(width, 0), Math.max(height, 0))
-            );
+            FramebufferSize initialFramebufferSize = queryFramebufferSize(window);
             glfwShowWindow(window);
 
-            glfwWindow = new GlfwWindow(window, diagnostics);
+            GlfwWindow createdWindow = new GlfwWindow(window, diagnostics, initialFramebufferSize);
+
+            glViewport(0, 0, initialFramebufferSize.width(), initialFramebufferSize.height());
+
+            glfwSetFramebufferSizeCallback(window, (ignored, width, height) ->
+                    createdWindow.updateFramebufferSize(width, height));
 
             glfwSetKeyCallback(window, (ignoredWindow, glfwKey, scanCode, glfwAction, modifiers) -> {
                         Optional<DigitalButton> key = GlfwInputMapper.mapButton(glfwKey);
-                        Optional<ButtonTransition> transition =
-                                GlfwInputMapper.mapAction(glfwAction);
+                        Optional<ButtonTransition> transition = GlfwInputMapper.mapAction(glfwAction);
 
                         if (key.isPresent() && transition.isPresent()) {
                             inputSink.onButtonChanged(key.get(), transition.get());
@@ -107,6 +111,7 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
                         }
                     }
             );
+            glfwWindow = createdWindow;
         } catch (RuntimeException exception) {
             if (diagnostics != null) {
                 diagnostics.close();
@@ -151,19 +156,31 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
         }
         closed = true;
 
+        diagnostics.close();
         glfwFreeCallbacks(handle);
         glfwDestroyWindow(handle);
         glfwTerminate();
         clearErrorCallback();
     }
 
-    private static void updateViewport(long window) {
+    private static FramebufferSize queryFramebufferSize(long window) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer width = stack.mallocInt(1);
             IntBuffer height = stack.mallocInt(1);
+
             glfwGetFramebufferSize(window, width, height);
-            glViewport(0, 0, width.get(0), height.get(0));
+
+            return new FramebufferSize(Math.max(width.get(0), 0), Math.max(height.get(0), 0));
         }
+    }
+
+    private void updateFramebufferSize(int width, int height) {
+        int safeWidth = Math.max(width, 0);
+        int safeHeight = Math.max(height, 0);
+
+        framebufferSize = new FramebufferSize(safeWidth, safeHeight);
+
+        glViewport(0, 0, safeWidth, safeHeight);
     }
 
     private static void clearErrorCallback() {
@@ -171,5 +188,10 @@ public final class GlfwWindow implements EngineHost, AutoCloseable {
         if (callback != null) {
             callback.free();
         }
+    }
+
+    @Override
+    public FramebufferSize getFramebufferSize() {
+        return framebufferSize;
     }
 }

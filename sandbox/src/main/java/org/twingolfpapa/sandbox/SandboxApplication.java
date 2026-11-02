@@ -4,6 +4,8 @@ import org.joml.Matrix4f;
 import org.twingolfpapa.engine.api.EngineClient;
 import org.twingolfpapa.engine.api.EngineContext;
 import org.twingolfpapa.engine.core.EngineConfiguration;
+import org.twingolfpapa.engine.graphics.FramebufferSize;
+import org.twingolfpapa.engine.graphics.camera.OrthographicCamera;
 import org.twingolfpapa.engine.input.*;
 import org.twingolfpapa.engine.lwjgl.DesktopApplication;
 import org.twingolfpapa.engine.lwjgl.WindowConfiguration;
@@ -13,7 +15,7 @@ import org.twingolfpapa.engine.lwjgl.opengl.OpenGlShaderProgram;
 
 import java.util.Objects;
 
-/** Neutral playground used to exercise engine features without embedding a game in the engine. */
+/** Provides a neutral playground for engine features without embedding a game in the engine. */
 public final class SandboxApplication implements EngineClient {
 
     private static final String VERTEX_SHADER = """
@@ -22,12 +24,14 @@ public final class SandboxApplication implements EngineClient {
         layout(location = 0) in vec3 position;
         layout(location = 1) in vec3 color;
 
+        uniform mat4 view;
+        uniform mat4 projection;
         uniform mat4 model;
 
         out vec3 vertexColor;
 
         void main() {
-            gl_Position = model * vec4(position, 1.0);
+            gl_Position = projection * view * model * vec4(position, 1.0);
             vertexColor = color;
         }
         """;
@@ -56,7 +60,14 @@ public final class SandboxApplication implements EngineClient {
             0, 1, 2,
             2, 3, 0
     };
+    private final Matrix4f viewMatrix = new Matrix4f();
+    private final Matrix4f projectionMatrix = new Matrix4f();
+    private final OrthographicCamera camera = new OrthographicCamera(1.0f);
+
+    private int viewLocation;
+    private int projectionLocation;
     private int modelLocation;
+
     private final Matrix4f modelMatrix = new Matrix4f();
 
     private static final float ROTATION_SPEED_RADIANS =
@@ -65,6 +76,10 @@ public final class SandboxApplication implements EngineClient {
     private float previousRotationRadians;
     private float currentRotationRadians;
 
+    private static final float CAMERA_SPEED = 1.5f;
+    private static final float MINIMUM_VIEW_HALF_HEIGHT = 0.25f;
+    private static final float MAXIMUM_VIEW_HALF_HEIGHT = 10.0f;
+    private static final float ZOOM_SENSITIVITY = 0.15f;
 
     private EngineContext context;
     private boolean wHeld;
@@ -72,7 +87,7 @@ public final class SandboxApplication implements EngineClient {
     private OpenGlIndexedMesh mesh;
 
      static void main(String[] arguments) {
-        DesktopApplication.run(
+        DesktopApplication.   run(
                 WindowConfiguration.windowed(1280, 720, "Project Engine Sandbox"),
                 EngineConfiguration.atFixedRate(60),
                 new SandboxApplication()
@@ -85,18 +100,67 @@ public final class SandboxApplication implements EngineClient {
         shaderProgram = OpenGlShaderProgram.create(VERTEX_SHADER, FRAGMENT_SHADER);
 
         modelLocation = shaderProgram.uniformLocation("model");
+        viewLocation = shaderProgram.uniformLocation("view");
+        projectionLocation = shaderProgram.uniformLocation("projection");
 
+        viewMatrix.identity();
         mesh = OpenGlIndexedMesh.create(QUAD_VERTICES, QUAD_INDICES);
     }
 
     @Override
     public void fixedUpdate(double fixedDeltaSeconds) {
-         if (context.input().wasButtonPressed(Key.ESCAPE)) {
-             context.control().requestStop();
-         }
+        if (context.input().wasButtonPressed(Key.ESCAPE)) {
+            context.control().requestStop();
+        }
 
-         wHeld = context.input().isButtonDown(MouseButton.LEFT);
+        camera.beginFixedUpdate();
         previousRotationRadians = currentRotationRadians;
+
+        float directionX = 0.0f;
+        float directionY = 0.0f;
+
+        if (context.input().isButtonDown(Key.A)) {
+            directionX -= 1.0f;
+        }
+
+        if (context.input().isButtonDown(Key.D)) {
+            directionX += 1.0f;
+        }
+
+        if (context.input().isButtonDown(Key.W)) {
+            directionY += 1.0f;
+        }
+
+        if (context.input().isButtonDown(Key.S)) {
+            directionY -= 1.0f;
+        }
+
+        float directionLength =
+                (float) Math.sqrt(
+                        directionX * directionX +
+                                directionY * directionY
+                );
+
+        if (directionLength > 0.0f) {
+            directionX /= directionLength;
+            directionY /= directionLength;
+        }
+
+        float cameraDeltaX = directionX * CAMERA_SPEED * (float) fixedDeltaSeconds;
+        float cameraDeltaY = directionY * CAMERA_SPEED * (float) fixedDeltaSeconds;
+
+        camera.move(cameraDeltaX, cameraDeltaY);
+
+        double scrollY = context.input().scrollDelta().y();
+
+        float requestedViewHalfHeight = camera.viewHalfHeight()
+                * (float) Math.exp(-scrollY * ZOOM_SENSITIVITY);
+
+        float clampedViewHalfHeight = Math.max(MINIMUM_VIEW_HALF_HEIGHT, Math.min(MAXIMUM_VIEW_HALF_HEIGHT, requestedViewHalfHeight));
+
+        camera.setViewHalfHeight(clampedViewHalfHeight);
+
+        wHeld = context.input().isButtonDown(MouseButton.LEFT);
 
         currentRotationRadians += ROTATION_SPEED_RADIANS * (float) fixedDeltaSeconds;
     }
@@ -108,22 +172,26 @@ public final class SandboxApplication implements EngineClient {
         } else {
             OpenGlFrame.clear(0.055f, 0.065f, 0.085f, 1.0f);
         }
+        FramebufferSize size = context.renderSurface().getFramebufferSize();
+
+        if (!size.hasArea()) {
+            return;
+        }
 
         float alpha = (float) interpolationAlpha;
 
-        float renderedRotation =
-                previousRotationRadians
-                        + (currentRotationRadians - previousRotationRadians)
-                        * alpha;
+        float aspectRatio = (float) size.width() / size.height();
+        camera.writeProjectionMatrix(aspectRatio, alpha, projectionMatrix);
 
-        modelMatrix.identity()
-                .translate(0.25f, 0.0f, 0.0f)
-                .rotateZ(renderedRotation)
-                .scale(0.65f);
+        float renderedRotation = previousRotationRadians + (currentRotationRadians - previousRotationRadians) * alpha;
 
-
+        modelMatrix.identity().translate(0.25f, 0.0f, 0.0f).rotateZ(renderedRotation).scale(0.65f);
+        camera.writeViewMatrix(alpha, viewMatrix);
         shaderProgram.bind();
         shaderProgram.setMatrix4(modelLocation, modelMatrix);
+        shaderProgram.setMatrix4(viewLocation, viewMatrix);
+        shaderProgram.setMatrix4(projectionLocation, projectionMatrix);
+
         mesh.draw();
     }
 

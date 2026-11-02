@@ -43,7 +43,7 @@ public final class EngineLoop implements EngineControl {
         scheduler.reset();
 
         try {
-            client.initialize(new EngineContext(this, input));
+            client.initialize(new EngineContext(this, input, host));
             long previousNanos = clock.nowNanos();
 
             while (!stopRequested && !host.shouldClose()) {

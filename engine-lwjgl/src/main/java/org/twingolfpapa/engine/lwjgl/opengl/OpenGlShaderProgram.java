@@ -36,7 +36,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
             int linkStatus = glGetProgrami(programId, GL_LINK_STATUS);
             if (linkStatus == GL_FALSE) {
                 String linkerLog = glGetProgramInfoLog(programId);
-                throw new IllegalArgumentException("Failed to link shader program: \n" + linkerLog);
+                throw new IllegalArgumentException("OpenGL could not link the shader program:\n" + linkerLog);
             }
 
             glDetachShader(programId, vertexShaderId);
@@ -62,7 +62,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
 
     public void bind() {
         if (closed) {
-            throw new IllegalStateException("Cannot bind a closed shader program");
+            throw new IllegalStateException("The bind operation requires an open shader program");
         }
 
         glUseProgram(programId);
@@ -70,7 +70,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
 
     public int uniformLocation(String name) {
         if (closed) {
-            throw new IllegalStateException("Cannot query a closed shader program");
+            throw new IllegalStateException("A uniform query requires an open shader program");
         }
 
         Objects.requireNonNull(name, "name");
@@ -78,7 +78,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
         int location = glGetUniformLocation(programId, name);
 
         if (location == -1) {
-            throw new IllegalArgumentException("Uniform is missing or inactive: " + name);
+            throw new IllegalArgumentException("OpenGL did not find an active uniform: " + name);
         }
 
         return location;
@@ -86,7 +86,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
 
     public void setMatrix4(int location, Matrix4fc matrix) {
         if (closed) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("A matrix update requires an open shader program");
         }
 
         Objects.requireNonNull(matrix);
@@ -108,7 +108,7 @@ public final class OpenGlShaderProgram implements AutoCloseable {
         int shaderId = glCreateShader(shaderType);
 
         if (shaderId == 0) {
-            throw new IllegalStateException("OpenGl could not create the " + stageName + " shader");
+            throw new IllegalStateException("OpenGL could not create the " + stageName + " shader");
         }
 
         try {
@@ -120,7 +120,9 @@ public final class OpenGlShaderProgram implements AutoCloseable {
             if (compilationStatus == GL_FALSE) {
                 String compilerLog = glGetShaderInfoLog(shaderId);
 
-                throw new IllegalStateException("Failed to compile " + stageName + " shader: \n" + compilerLog);
+                throw new IllegalStateException(
+                        "OpenGL could not compile the " + stageName + " shader:\n" + compilerLog
+                );
             }
 
             return shaderId;

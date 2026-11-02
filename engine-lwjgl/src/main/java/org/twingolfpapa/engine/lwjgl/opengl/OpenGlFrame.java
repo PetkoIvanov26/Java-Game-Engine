@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 
-/** Temporary bootstrap operations used until the renderer module is introduced. */
+/** Provides temporary bootstrap operations until the project adds a renderer module. */
 public final class OpenGlFrame {
     private OpenGlFrame() {
     }
